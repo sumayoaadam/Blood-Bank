@@ -18,12 +18,21 @@ function Header() {
                 <li><Link to="/about" className="hover:text-red-700">About</Link></li>
                 <li><Link to="/blog" className="hover:text-red-700">Blog</Link></li>
                 <li><Link to="/service" className="hover:text-red-700">Service</Link></li>
+                
             </ul>
+            <div className="flex items-center space-x-4">
+                <Link to="/login">
+                    <button className="hidden md:block bg-red-900 text-white px-6 py-2 rounded-lg text-lg font-semibold shadow-lg hover:bg-red-700 transition-all">
+                        Login
+                    </button>
+                </Link>
+                </div>
+            
 
-            <button 
+            {/* <button 
                 className="bg-red-900 text-white text-xl font-semibold px-12 py-2 rounded-lg mb-4" onClick={toggleLogin}>Login</button>
 
-            {showLogin && <LoginForm onClose={toggleLogin} />}
+            {showLogin && <Login onClose={toggleLogin} />} */}
         </div>
     );
 }

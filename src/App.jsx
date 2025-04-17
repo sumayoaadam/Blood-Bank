@@ -4,6 +4,9 @@ import Home from "./pages/Home"
 import About from "./pages/About"
 import Blog from "./pages/Blog";
 import Services from "./components/Services"
+import Login from "./pages/Login"
+import Register from "./pages/Register";
+
 
 function App(){
   return(
@@ -15,6 +18,10 @@ function App(){
                 <Route path="/about" element={<About />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/service" element={<Services />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+
+
             </Route>
       </Routes>
     </Router>  
