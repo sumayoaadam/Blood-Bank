@@ -18,11 +18,12 @@ function App(){
                 <Route path="/about" element={<About />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/service" element={<Services />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+               
 
 
             </Route>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
       </Routes>
     </Router>  
     
