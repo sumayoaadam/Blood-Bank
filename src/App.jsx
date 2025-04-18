@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Boxes from "./pages/Boxes";
 import DonorTable from "./pages/DonorTable";
 import Donation from "./pages/Donations";
+import Donatenow from "./pages/Donatenow";
 
 
 
@@ -23,6 +24,8 @@ function App(){
                 <Route path="/about" element={<About />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/service" element={<Services />} />
+                <Route path="/donatenow" element={<Donatenow />} />
+
                
 
 
