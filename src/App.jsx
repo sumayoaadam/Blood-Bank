@@ -8,6 +8,7 @@ import Login from "./pages/Login"
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Boxes from "./pages/Boxes";
+import DonorTable from "./pages/DonorTable";
 
 
 
@@ -30,6 +31,8 @@ function App(){
                 <Route path="/register" element={<Register />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/boxes"  element={<Boxes />} />
+                <Route path="/donorTable" element={<DonorTable />} />
+
 
             </Route>
 
