@@ -11,6 +11,7 @@ import Boxes from "./pages/Boxes";
 import DonorTable from "./pages/DonorTable";
 import Donation from "./pages/Donations";
 import Donatenow from "./pages/Donatenow";
+import DonorManager from "./components/DonorManager";
 
 
 
@@ -25,6 +26,8 @@ function App(){
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/service" element={<Services />} />
                 <Route path="/donatenow" element={<Donatenow />} />
+                <Route path="/donorManager" element={<DonorManager />} />
+
 
                
 
