@@ -6,6 +6,8 @@ import Blog from "./pages/Blog";
 import Services from "./components/Services"
 import Login from "./pages/Login"
 import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+
 
 
 function App(){
@@ -22,8 +24,12 @@ function App(){
 
 
             </Route>
+            <Route>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+            </Route>
+
       </Routes>
     </Router>  
     
