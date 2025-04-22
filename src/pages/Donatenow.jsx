@@ -12,6 +12,7 @@ function Donatenow({ setDonorList }) {
   const [age, setAge] = useState("");
   const [bloodType, setBloodType] = useState("");
   const [healthyStatus, setHealthyStatus] = useState("");
+  const [IsLoading,setIsLoading]=useState(false)
 
   const navigate = useNavigate();
 
@@ -44,6 +45,13 @@ function Donatenow({ setDonorList }) {
   const isPhoneValid = /^\d{10}$/.test(phone);
   const isAgeValid = age >= 1 && age <= 100;
   const isFullNameValid = /^[A-Za-z\s]+$/.test(FullName);
+
+  const handleSubmit =(event)=>{
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null)
+    
+  }
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-red-900 p-6 mt-24">
@@ -111,7 +119,7 @@ function Donatenow({ setDonorList }) {
                 </select>
               </div>
             </div>
-            <button type="submit" disabled={healthyStatus === "No" || !isFullNameValid || !isPhoneValid || !isAgeValid} className={`w-56 ${healthyStatus === "No" || !isFullNameValid || !isPhoneValid || !isAgeValid ? "bg-gray-400 cursor-not-allowed" : "bg-white"} text-red-900 font-semibold py-3 rounded-lg hover:bg-red-900 transition ml-24 mt-5`}>
+            <button onSubmit={handleSubmit} type="submit" disabled={healthyStatus === "No" || !isFullNameValid || !isPhoneValid || !isAgeValid} className={`w-56 ${healthyStatus === "No" || !isFullNameValid || !isPhoneValid || !isAgeValid ? "bg-gray-400 cursor-not-allowed" : "bg-white"} text-red-900 font-semibold py-3 rounded-lg hover:bg-red-900 transition ml-24 mt-5`}>
               Register Here
             </button>
           </form>
