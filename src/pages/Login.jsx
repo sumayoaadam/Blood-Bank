@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useState } from "react";
 import bgImg from "../assets/bgImg.png";
 import { signIn } from '../lib/auth'
-// import { useAuth } from '../context/AuthContext'
+import { useAuth } from "../context/AuthContext";
 
 
 
@@ -28,9 +28,9 @@ function Login() {
 
     try {
 
-      await signIn(email, password);
-
-      navigate('/Dashboard')
+        const { user } = await signIn(email, password);
+        if (user) {
+      navigate('/Dashboard')}
 
     } catch (error) {
       setError(error.message || "Failed to sign in . Please check your credentials.")
@@ -39,6 +39,8 @@ function Login() {
       setIsLoading(false)
     }
   }
+  const authInfo =useAuth()
+  console.log({authInfo})
 
     return (
         <div className="w-full h-screen bg-cover bg-center flex justify-center items-center" style={{ backgroundImage: `url(${bgImg})`}}>
