@@ -12,41 +12,56 @@ import DonorTable from "./pages/DonorTable";
 import Donation from "./pages/Donations";
 import Donatenow from "./pages/Donatenow";
 import DonorManager from "./components/DonorManager";
+import { AuthProvider } from "./context/AuthContext";
+import UnAuthenticatedRoute from "./components/UnAuthenticatedRoute";
 
 
 
 function App(){
   return(
-    <Router>
-      <Routes>
-            {/* Layout-ka guud ee leh Header & Footer */}
-            <Route element={<MainLayout />}>
-                <Route path="/"  element={<Home />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/service" element={<Services />} />
-                <Route path="/donatenow" element={<Donatenow />} />
-                <Route path="/donorManager" element={<DonorManager />} />
+   <AuthProvider>
+        <Router>
+          <Routes>
+                {/* Layout-ka guud ee leh Header & Footer */}
+                <Route element={<MainLayout />}>
+                    <Route path="/"  element={<Home />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/service" element={<Services />} />
+                    <Route path="/donatenow" element={<Donatenow />} />
+                    <Route path="/donorManager" element={<DonorManager />} />
 
 
-               
+                  
 
 
-            </Route>
-            <Route>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/boxes"  element={<Boxes />} />
-                <Route path="/donorTable" element={<DonorTable />} />
-                <Route path="/donation" element={<Donation />} />
+                </Route>
+                <Route>
+                    <Route path="/login" 
+                    element={
+                      <UnAuthenticatedRoute>
+                          <Login />
+                      </UnAuthenticatedRoute>} />
+
+                    <Route path="/register" element={
+                      <UnAuthenticatedRoute>
+                          <Register />
+                      </UnAuthenticatedRoute>} />
+                      
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/boxes"  element={<Boxes />} />
+                    <Route path="/donorTable" element={<DonorTable />} />
+                    <Route path="/donation" element={<Donation />} />
 
 
 
-            </Route>
+                </Route>
 
-      </Routes>
-    </Router>  
+          </Routes>
+        </Router>  
+    </AuthProvider>
+   
+    
     
   )
 }
