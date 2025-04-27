@@ -3,6 +3,7 @@ import axios from "axios";
 import Dashboard from "./Dashboard";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
+import supabase from "../lib/supabase";
 
 const Boxes = () => {
   const [donorCount, setDonorCount] = useState(0);
@@ -12,22 +13,26 @@ const Boxes = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [donorRes, userRes] = await Promise.all([
-          axios.get("http://localhost:9000/read/donor"),
-          axios.get("http://localhost:9000/read/users"),
+        const [{ data: donorData, error: donorError }, { data: userData, error: userError }] = await Promise.all([
+          supabase.from("donors").select("*"),
+          supabase.from("users").select("*"),
         ]);
 
-        setDonorCount(donorRes.data.length);
-        setUserCount(userRes.data.length);
+        if (donorError) throw donorError;
+        if (userError) throw userError;
+
+        setDonorCount(donorData.length);
+        setUserCount(userData.length);
       } catch (error) {
         console.log("Error fetching data:", error);
       }
     };
+
     fetchData();
   }, []);
 
   useEffect(() => {
-    setTotal(donorCount + userCount); 
+    setTotal(donorCount + userCount);
   }, [donorCount, userCount]);
 
   const getPercentage = (count) => {
@@ -39,10 +44,11 @@ const Boxes = () => {
       <Dashboard />
       <div className="p-6 ml-64 w-full">
         
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"> 
+        {/* Sanduuqa tirada */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {[{ label: "Donors", count: donorCount, bg: "bg-red-600" }, 
             { label: "Users", count: userCount, bg: "bg-blue-600" } 
+
           ].map((item, index) => (
               <div key={index} className={`flex flex-col items-center ${item.bg} shadow-lg rounded-lg p-6`}>
                 <h2 className="text-xl font-bold text-white">{item.label}</h2>
@@ -51,16 +57,17 @@ const Boxes = () => {
           ))}
         </div>
 
-        {/* Percentage Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-20 mr-16"> 
+        {/* Qaybta boqolkiiba  */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-20 mr-16">
           {[{ label: "Donors", count: donorCount, trailColor: "#ef0202" }, 
             { label: "Users", count: userCount, trailColor: "#062df0" } 
+
           ].map((item, index) => (
               <div key={index} className="flex flex-col items-center">
                 <h3 className="text-xl font-semibold text-gray-700">{item.label}</h3>
                 <div className="mt-4 w-24 h-24">
                   <CircularProgressbar
-                    value={getPercentage(item.count)}
+                    value={getPercentage(item.count)} 
                     styles={buildStyles({
                       pathColor: "#000", 
                       trailColor: item.trailColor, 
