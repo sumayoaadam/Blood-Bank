@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Dashboard from "./Dashboard";
-import Boxes from "./Boxes";
+import supabase from "../lib/supabase";
+import emailjs from "emailjs-com";
 
 function DonorTable({ refresh }) {
   const [donors, setDonors] = useState([]);
@@ -9,8 +9,6 @@ function DonorTable({ refresh }) {
   const [showModal, setShowModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailMessage, setEmailMessage] = useState("");
-
-  // State for update form fields
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
@@ -19,165 +17,229 @@ function DonorTable({ refresh }) {
   const [age, setAge] = useState("");
   const [bloodType, setBloodType] = useState("");
   const [healthyStatus, setHealthyStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDonors = async () => {
       try {
-        const response = await axios.get("http://localhost:9000/read/donor");
-        setDonors(response.data);
-      } catch (error) {
-        console.log("Error fetching donors:", error);
+        const { data, error } = await supabase
+          .from("donors")
+          .select("*");
+  
+        if (error) {
+          console.error("Error fetching donors:", error.message);
+          setError("Failed to fetch donors");
+        } else {
+          console.log("Fetched donors: ", data); 
+          setDonors(data);
+        }
+      } catch (err) {
+        setError("Failed to fetch donors");
+      } finally {
+        setIsLoading(false);
       }
     };
-
+  
     fetchDonors();
   }, [refresh]);
-
-  const handleEmailModalClose = () => {
-    setShowEmailModal(false);
-    setEmailMessage("");
-  };
-
-  const handleEmailSend = async (e) => {
-    e.preventDefault();
-    const emailData = {
-      to: selectedDonor.email,
-      subject: "Blood Donation Request",
-      text: emailMessage,
-    };
-
-    try {
-      await axios.post(`http://localhost:9000/send-email`, emailData);
-      alert("Email sent successfully!");
-      handleEmailModalClose();
-    } catch (error) {
-      console.log("Error sending email:", error);
-    }
-  };
+  
 
   const handleUpdate = (donor) => {
+    console.log("Donor Selected:", donor);  
+  
+    
     setSelectedDonor(donor);
-    setFullName(donor.FullName);
+    setFullName(donor.full_name);
     setEmail(donor.email);
     setAddress(donor.address);
     setPhone(donor.phone);
     setGender(donor.gender);
     setAge(donor.age);
-    setBloodType(donor.bloodType);
-    setHealthyStatus(donor.healthyStatus);
+    setBloodType(donor.blood_type);
+    setHealthyStatus(donor.healthy_status);
+  
+    
     setShowModal(true);
   };
-
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-    const updatedDonor = {
-      FullName: fullName,
-      email,
-      address,
-      phone,
-      gender,
-      age,
-      bloodType,
-      healthyStatus,
-    };
-
-    try {
-      await axios.put(`http://localhost:9000/update/donor/${selectedDonor._id}`, updatedDonor);
-      alert("Donor updated successfully!");
-      setShowModal(false);
-      refresh(); // Refresh the donor list
-    } catch (error) {
-      console.log("Error updating donor:", error);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this donor?");
+    console.log("Current Data:", selectedDonor);
+    console.log("Selected Donor:", selectedDonor);
+    console.log("Selected Donor ID:", selectedDonor?.id);
     
-    if (confirmDelete) {
-      try {
-        await axios.delete(`http://localhost:9000/delete/donor/${id}`);
-        alert("Donor deleted successfully!");
-        refresh(); // Refresh the donor list
-      } catch (error) {
-        console.log("Error deleting donor:", error);
+    const updatedDonor = {
+      full_name: fullName,
+      email: email,
+      address: address,
+      phone: phone,
+      gender: gender,
+      age: age,
+      blood_type: bloodType,
+      healthy_status: healthyStatus,
+    };
+  
+    const { data, error } = await supabase
+      .from("donors")
+      .update(updatedDonor)
+      .eq("id", selectedDonor.id);
+  
+    if (error) {
+      alert("Failed to update donor.");
+      console.error(error);
+    } else {
+      const { data: updatedDonorData, error: fetchError } = await supabase
+        .from("donors")
+        .select("*")
+        .eq("id", selectedDonor.id)
+        .single();
+  
+      if (fetchError) {
+        alert("Failed to fetch updated donor data.");
+        console.error(fetchError);
+      } else {
+        console.log("Updated Donor Data:", updatedDonorData);
+        alert("Donor updated successfully!");
+        setShowModal(false);
+        window.location.reload(); 
       }
     }
   };
+  
+  
+  
+
+  const handleDelete = async (donorId) => {
+    const { error } = await supabase
+      .from("donors")
+      .delete()
+      .eq("id", donorId);
+  
+    if (error) {
+      alert("Failed to delete donor.");
+      console.error(error);
+    } else {
+      setDonors(donors.filter((donor) => donor.id !== donorId));
+      alert("Donor deleted successfully!");
+    }
+  };
+
+  const handleEmailSend = async (e) => {
+    e.preventDefault();
+  
+    const templateParams = {
+      to_email: selectedDonor.email,
+      message: emailMessage,
+    };
+  
+    try {
+      const result = await emailjs.send(
+        "service_qkany7o",    
+        "template_uxmkbif",   
+        templateParams,
+        "txqZzrM3AjEEbv1PF"    
+      );
+      alert("Email sent successfully!");
+      setShowEmailModal(false);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to send email.");
+    }
+  };
+  const handleEmailModalClose = () => {
+    setShowEmailModal(false);
+    setEmailMessage("");
+  };
+
 
   return (
     <div className="flex">
       <Dashboard />
       <div className="container ml-64 mr-10">
         <h2 className="text-3xl font-bold text-center mb-2 text-red-900">List Of Donors</h2>
-        
-        <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
-          <table className="min-w-full table-auto">
-            <thead>
-              <tr className="bg-red-900 text-white">
-                <th className="px-6 py-3 text-left">Full Name</th>
-                <th className="px-6 py-3 text-left">Email</th>
-                <th className="px-6 py-3 text-left">Phone</th>
-                <th className="px-6 py-3 text-left">Age</th>
-                <th className="px-6 py-3 text-left">Gender</th>
-                <th className="px-6 py-3 text-left">Address</th>
-                <th className="px-6 py-3 text-left">Blood Type</th>
-                <th className="px-6 py-3 text-left">Health Status</th>
-                <th className="px-6 py-3 text-left">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {donors.map((donor) => (
-                <tr key={donor._id} className="border-b hover:bg-gray-100">
-                  <td className="px-6 py-3">{donor.FullName}</td>
-                  <td className="px-6 py-3">{donor.email}</td>
-                  <td className="px-6 py-3">{donor.phone}</td>
-                  <td className="px-6 py-3">{donor.age}</td>
-                  <td className="px-6 py-3">{donor.gender}</td>
-                  <td className="px-6 py-3">{donor.address}</td>
-                  <td className="px-6 py-3">{donor.bloodType}</td>
-                  <td className="px-6 py-3">{donor.healthyStatus}</td>
-                  <td className="px-6 py-3 flex gap-4">
-                    <i 
-                      className="fa-solid fa-pen-to-square text-yellow-500 cursor-pointer" 
-                      onClick={() => handleUpdate(donor)} 
-                    />
-                    <i 
-                      className="fa-solid fa-trash text-red-500 cursor-pointer" 
-                      onClick={() => handleDelete(donor._id)} 
-                    />
-                    <button 
-                      className="text-black font-semibold" 
-                      onClick={() => {
-                        setSelectedDonor(donor);
-                        setShowEmailModal(true);
-                      }}
-                    >
-                      Send Email
-                    </button>
-                  </td>
+
+        {isLoading ? (
+          <p className="text-center text-gray-500 my-4">Loading donors...</p>
+        ) : error ? (
+          <p className="text-center text-red-500 my-4">{error}</p>
+          
+        ) : (
+          <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-red-900 text-white">
+                  <th className="px-6 py-3 text-left">Full Name</th>
+                  <th className="px-6 py-3 text-left">Email</th>
+                  <th className="px-6 py-3 text-left">Phone</th>
+                  <th className="px-6 py-3 text-left">Age</th>
+                  <th className="px-6 py-3 text-left">Gender</th>
+                  <th className="px-6 py-3 text-left">Address</th>
+                  <th className="px-6 py-3 text-left">Blood Type</th>
+                  <th className="px-6 py-3 text-left">Health Status</th>
+                  <th className="px-6 py-3 text-left">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+              {donors.map((donor, index) => (
+                <tr key={donor._id || index} className="border-b hover:bg-gray-100">
+                    <td className="px-6 py-3">{donor.full_name}</td>
+                    <td className="px-6 py-3">{donor.email}</td>
+                    <td className="px-6 py-3">{donor.phone}</td>
+                    <td className="px-6 py-3">{donor.age}</td>
+                    <td className="px-6 py-3">{donor.gender}</td>
+                    <td className="px-6 py-3">{donor.address}</td>
+                    <td className="px-6 py-3">{donor.blood_type}</td>
+                    <td className="px-6 py-3">{donor.healthy_status}</td>
+                    <td className="px-6 py-3 flex gap-4">
+                      <i
+                        className="fa-solid fa-pen-to-square text-yellow-500 cursor-pointer"
+                        onClick={() => handleUpdate(donor)}
+                      />
+                      <i
+                        className="fa-solid fa-trash text-red-500 cursor-pointer"
+                        onClick={() => handleDelete(donor.id)}
+                      />
+                      <button
+                        className="text-black font-semibold"
+                        onClick={() => {
+                          setSelectedDonor(donor);
+                          setShowEmailModal(true);
+                        }}
+                      >
+                        Send Email
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Email Modal */}
         {showEmailModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-4 rounded-lg">
-              <h2 className="text-lg font-bold">Send Email to {selectedDonor?.FullName}</h2>
+              <h2 className="text-lg font-bold">Send Email to {selectedDonor?.fullName}</h2>
               <form onSubmit={handleEmailSend}>
-                <textarea 
+                <textarea
                   value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)} 
-                  required 
-                  placeholder="Type your message here..." 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                  rows="4" 
+                  onChange={(e) => setEmailMessage(e.target.value)}
+                  required
+                  placeholder="Type your message here..."
+                  className="w-full p-2 border border-gray-300 rounded mb-2"
+                  rows="4"
                 />
-                <button type="submit" className="bg-red-900 text-white p-2 rounded">Send Email</button>
-                <button type="button" onClick={handleEmailModalClose} className="bg-gray-500 text-white p-2 rounded ml-2">Cancel</button>
+                <button type="submit" className="bg-red-900 text-white p-2 rounded">
+                  Send Email
+                </button>
+                <button
+                  type="button"
+                  onClick={handleEmailModalClose}
+                  className="bg-gray-500 text-white p-2 rounded ml-2"
+                >
+                  Cancel
+                </button>
               </form>
             </div>
           </div>
@@ -189,72 +251,34 @@ function DonorTable({ refresh }) {
             <div className="bg-white p-4 rounded-lg">
               <h2 className="text-lg font-bold">Update Donor</h2>
               <form onSubmit={handleUpdateSubmit}>
-                <input 
-                  type="text" 
-                  value={fullName} 
-                  onChange={(e) => setFullName(e.target.value)} 
-                  required 
-                  placeholder="Full Name" 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                />
-                <input 
-                  type="email" 
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  required 
-                  placeholder="Email" 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                />
-                <input 
-                  type="text" 
-                  value={address} 
-                  onChange={(e) => setAddress(e.target.value)} 
-                  required 
-                  placeholder="Address" 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                />
-                <input 
-                  type="text" 
-                  value={phone} 
-                  onChange={(e) => setPhone(e.target.value)} 
-                  required 
-                  placeholder="Phone" 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                />
-                <input 
-                  type="text" 
-                  value={gender} 
-                  onChange={(e) => setGender(e.target.value)} 
-                  required 
-                  placeholder="Gender" 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                />
-                <input 
-                  type="number" 
-                  value={age} 
-                  onChange={(e) => setAge(e.target.value)} 
-                  required 
-                  placeholder="Age" 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                />
-                <input 
-                  type="text" 
-                  value={bloodType} 
-                  onChange={(e) => setBloodType(e.target.value)} 
-                  required 
-                  placeholder="Blood Type" 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                />
-                <input 
-                  type="text" 
-                  value={healthyStatus} 
-                  onChange={(e) => setHealthyStatus(e.target.value)} 
-                  required 
-                  placeholder="Health Status" 
-                  className="w-full p-2 border border-gray-300 rounded mb-2" 
-                />
-                <button type="submit" className="bg-blue-500 text-white p-2 rounded">Update</button>
-                <button type="button" onClick={() => setShowModal(false)} className="bg-gray-500 text-white p-2 rounded ml-2">Cancel</button>
+                {[["Full Name", fullName, setFullName],
+                  ["Email", email, setEmail],
+                  ["Address", address, setAddress],
+                  ["Phone", phone, setPhone],
+                  ["Gender", gender, setGender],
+                  ["Age", age, setAge],
+                  ["Blood Type", bloodType, setBloodType],
+                  ["Health Status", healthyStatus, setHealthyStatus]].map(([label, value, setter], i) => (
+                    <input
+                      key={i}
+                      type={label === "Email" ? "email" : label === "Age" ? "number" : "text"}
+                      value={value}
+                      onChange={(e) => setter(e.target.value)}
+                      required
+                      placeholder={label}
+                      className="w-full p-2 border border-gray-300 rounded mb-2"
+                    />
+                  ))}
+                <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+                  Update
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="bg-gray-500 text-white p-2 rounded ml-2"
+                >
+                  Cancel
+                </button>
               </form>
             </div>
           </div>
