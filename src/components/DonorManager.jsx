@@ -1,5 +1,5 @@
 import { useState } from "react";
-import AddDonor from "../pages/Donatenow";
+import AddDonor from "../pages/DonateRegister";
 import DonorTable from "../pages/DonorTable";
 
 function DonorManager() {
