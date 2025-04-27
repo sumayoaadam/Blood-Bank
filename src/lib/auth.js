@@ -1,148 +1,125 @@
 import supabase from "./supabase";
 
-export async function  signUp(email,password,username) {
-
-
-let { data, error } = await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    data: {
-      username: username
+// Sign Up
+export async function signUp(email, password, username) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { username }
     }
+  });
+
+  if (error) {
+    console.error("Auth signup error:", error.message);
+    throw error;
   }
-})
-if (error) {
-  console.error("Auth signup error:", error.message);
-  throw error;
-} else {
-  console.log('Auth signup successful:', data)
-}
 
+  console.log("Auth signup successful:", data);
 
-      if(data?.user) {
-        const { data : sessionData } = await supabase.auth.getSession()
+  if (data?.user) {
+    const displayName = username || email.split("@")[0];
 
-        if(!sessionData?.session) {
-            console.log('No active session yet - profile will be created on first sign in')
-            return data;
-        }
-    
-     
-      const displayName = username || email.split("@")[0];
-      //   create profile
-
-    const {data: profileData, error : profileError } = await supabase
-    
-    .from('users')
-    .insert({
+    const { data: profileData, error: profileError } = await supabase
+      .from("users")
+      .insert({
         id: data.user.id,
         username: displayName,
         avatar_url: null
-    })
-    .select()
-    .single()
-
-    if(profileError){
-        console.error("profile creation error:", profileError)
-    }else{
-        console.log("Profile created successfully", profileData)
-    }
-
-}
-
-return data
-
-
-
-}
-
-export async function signIn(email, password) {
-
-let { data, error } = await supabase.auth.signInWithPassword({
-    email: email,
-    password: password
-  })
-
-  console.log("user info ", data)
-
-  if(error) throw error
-
-//   check if user profile exists , create if it doesn't
-
-if(data?.user){
-    try{
-        const profile = await getUserProfile(data.user.id);
-        console.log("profile info ", profile)
-    }catch(profileError){
-        console.error('Error with profile during signin:', profileError)
-    }
-}
-}
-    
-export async  function getUserProfile(userId) {
-
-
-  const { data : sessionData } = await supabase.auth.getSession()
-
-  const { data , error } = await supabase.from('users')
-      .select("*")
-      .eq("id", userId)
-      .single()
-
-      // if user doest exist , create new one 
-
-      if(error && error.code === "PGRST116"){
-          console.log('No profile found, attempting to create one for user:', userId)
-
-          
-
-      // get user email to drive username if needed
-
-      const { data : userData } = await supabase.auth.getUser();
-
-      console.log("true data", userData)
-
-      const email = userData?.user.email;
-
-    
-      // mchamuuda @ gmail.com
-
-      const defaultUsername = email ? email.split("@")[0] : `user_${Date.now()}`;
-
-
-      // create profile 
-
-      const { data: newProfile, error : profileError } = await supabase
-  
-      .from('users')
-      .insert({
-          id: userId,
-          username: defaultUsername,
-          avatar_url: null
       })
       .select()
-      .single()
+      .single();
 
-      if(profileError){
-          console.error("profile creation error:", profileError)
-          throw profileError
-      }else{
-          console.log("Profile created successfully", newProfile)
-      }
+    if (profileError) {
+      console.error("Profile creation error:", profileError.message);
+    } else {
+      console.log("Profile created successfully", profileData);
+    }
+  }
 
-      return newProfile
-      }
-
-
-      // general error 
-      if(error){
-          console.error('Error fetching profile:', error)
-          throw error
-      }
-
-      console.log("exiting profile")
-
-      return sessionData
+  return data;
 }
-     
+
+// Sign In
+export async function signIn(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    console.error("Sign-in error:", error.message);
+    throw error;
+  }
+
+  console.log("User info", data);
+
+  if (data?.user) {
+    try {
+      const profile = await getUserProfile(data.user.id, data.user.email);
+      console.log("Profile info", profile);
+    } catch (profileError) {
+      console.error("Error with profile during sign-in:", profileError.message);
+    }
+  }
+
+  return data;
+}
+
+// Get user profile, create if not exists
+export async function getUserProfile(userId, fallbackEmail = "") {
+  console.log("user email:", fallbackEmail);
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (error && error.code === "PGRST116") {
+    console.log("No profile found, creating one for user:", userId);
+
+    const email = fallbackEmail || `user_${Date.now()}@example.com`;
+    const defaultUsername = email.split("@")[0];
+
+    const { data: newProfile, error: profileError } = await supabase
+      .from("users")
+      .insert({
+        id: userId,
+        username: defaultUsername,
+        avatar_url: null
+      })
+      .select()
+      .single();
+
+    if (profileError) {
+      console.error("Profile creation error:", profileError.message);
+      throw profileError;
+    }
+
+    return newProfile;
+  }
+
+  if (error) {
+    console.error("Error fetching profile:", error.message);
+    throw error;
+  }
+
+  return data;
+}
+
+
+
+// Listen to auth state changes
+export function onAuthChange(callback) {
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    callback(session?.user || null, event);
+  });
+
+  return () => data.subscription.unsubscribe();
+}
+
+
+export const logout = async () => {
+  return await supabase.auth.signOut();
+};
