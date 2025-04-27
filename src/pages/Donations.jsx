@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Dashboard from "./Dashboard";
-import Boxes from "./Boxes";
+import supabase from "../lib/supabase";
 
 function Donation() {
   const [donors, setDonors] = useState([]);
@@ -10,24 +9,25 @@ function Donation() {
   useEffect(() => {
     const fetchDonors = async () => {
       try {
-        const response = await axios.get("http://localhost:9000/read/donor");
-        setDonors(response.data);
+        const { data, error } = await supabase
+          .from("donors")
+          .select("*")
+          .eq("blood_type", selectedBloodType);
+
+        if (error) {
+          console.error("Error fetching donors:", error.message);
+        } else {
+          setDonors(data);
+        }
       } catch (error) {
-        console.log("Error fetching donors:", error);
+        console.error("Unexpected error:", error);
       }
     };
 
     fetchDonors();
-  }, []);
+  }, [selectedBloodType]); 
 
   const bloodTypes = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
-  const filteredDonors = donors.filter(
-    (donor) => donor.bloodType === selectedBloodType
-  );
-
-  const downloadPDF = () => {
-    window.location.href = "http://localhost:9000/download-pdf";
-  };
 
   return (
     <div className="flex">
@@ -55,18 +55,8 @@ function Donation() {
           </select>
         </div>
 
-      
-        <div className="text-center mb-6">
-          <button
-            onClick={downloadPDF}
-            className="bg-red-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-400 transition-all duration-200"
-          >
-            Download PDF
-          </button>
-        </div>
-
         <div>
-          {filteredDonors.length === 0 ? (
+          {donors.length === 0 ? (
             <p className="text-center text-xl text-gray-600">
               No donors available for the selected blood type.
             </p>
@@ -75,19 +65,51 @@ function Donation() {
               <h3 className="text-2xl font-semibold text-red-900 text-center">
                 {selectedBloodType} Donors
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredDonors.map((donor) => (
-                  <div
-                    key={donor._id}
-                    className="bg-red-900 rounded-lg shadow-lg p-6 mr-10 transform hover:scale-105 transition-all duration-200"
-                  >
-                    <p className="text-white">{donor.FullName}</p>
-                    <p className="text-white">{donor.address}</p>
-                    <p className="text-white">{donor.email}</p>
-                    <p className="text-white">{donor.phone}</p>
-                  </div>
+              <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-red-900 text-white">
+                  <th className="px-6 py-3 text-left">Full Name</th>
+                  <th className="px-6 py-3 text-left">Email</th>
+                  <th className="px-6 py-3 text-left">Phone</th>
+                  <th className="px-6 py-3 text-left">Address</th>
+                  <th className="px-6 py-3 text-left">Action</th>
+
+                  
+                </tr>
+              </thead>
+              <tbody>
+              {donors.map((donor, index) => (
+                <tr key={donor._id || index} className="border-b hover:bg-gray-100">
+                    <td className="px-6 py-3">{donor.full_name}</td>
+                    <td className="px-6 py-3">{donor.email}</td>
+                    <td className="px-6 py-3">{donor.phone}</td>
+                    <td className="px-6 py-3">{donor.address}</td>
+
+                    <td className="px-6 py-3 flex gap-4">
+                      <i
+                        className="fa-solid fa-pen-to-square text-yellow-500 cursor-pointer"
+                        onClick={() => handleUpdate(donor)}
+                      />
+                      <i
+                        className="fa-solid fa-trash text-red-500 cursor-pointer"
+                        onClick={() => handleDelete(donor._id)}
+                      />
+                      <button
+                        className="text-black font-semibold"
+                        onClick={() => {
+                          setSelectedDonor(donor);
+                          setShowEmailModal(true);
+                        }}
+                      >
+                        Send Email
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </div>
+              </tbody>
+            </table>
+          </div>
             </div>
           )}
         </div>
