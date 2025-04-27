@@ -36,7 +36,7 @@ const Home = () => {
           One pint of blood can save a life. Be a hero and donate today!
         </p>
         <div className="mt-6 flex space-x-4">
-          <Link to="/DonateNow">
+          <Link to="/Login">
             <button className="bg-white text-red-900 px-6 py-3 rounded-lg text-lg font-semibold shadow-lg hover:bg-red-700 transition-all">
               Donate Now
             </button>
@@ -77,7 +77,6 @@ Our dedicated team works tirelessly to promote blood donation awareness and orga
           whileHover={{ scale: 1.1 }}
           className="mt-6 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-red-600 text-sm md:text-base"
         >
-          Donate Now
         </motion.button>
       </motion.div>
     </section>
@@ -136,6 +135,7 @@ const HomePage = () => {
       <Home />
       <WhoWeAre />
       <WaysToHelp />
+      
     </div>
   );
 };
